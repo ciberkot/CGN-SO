@@ -1,0 +1,4 @@
+openstack stack create  -t  main_CGN_instance_virtio -e CGN_params_v1_virtio  VTH50
+openstack stack update --existing VTH50 --parameter node_count=3
+openstack stack update --existing VTH50 --parameter node_count=4
+

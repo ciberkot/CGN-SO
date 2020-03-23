@@ -1,0 +1,140 @@
+---
+heat_template_version: '2016-10-14'
+
+description: >
+  CGN template for every instance
+
+parameters:
+
+  name:
+    type: string
+  a10_index: 
+    type: string
+  a10_name_indexes: 
+    type: comma_delimited_list
+  stack_name: 
+    type: string 
+  flavor: 
+    type: string
+  image: 
+    type: string
+  availability_zone: 
+    type: string
+  management_network_name: 
+    type: string
+  sw1_port1_net: 
+    type: string
+  sw1_port2_net: 
+    type: string
+  a10_ip_list:
+    type: comma_delimited_list
+  site_name:
+    type: string
+          
+
+resources:
+  vThunder_CGN:
+    type: OS::Nova::Server
+    properties:
+      name:
+        str_replace:
+          template: "<site_name>_CGN_A10_vThunder_<a10_index>"
+          params:
+            "<a10_index>": { get_param: [ a10_name_indexes, { get_param: a10_index } ] }
+            "<site_name>": { get_param: site_name }
+#      availability_zone: { get_param: availability_zone } 
+      flavor: { get_param: flavor }
+      image: { get_param: image }
+      networks:
+        - port: { get_resource: management_port }
+        - port: { get_resource: switch1_port1 }
+        - port: { get_resource: switch1_port2 }
+      config_drive: true
+      user_data_format: RAW
+      user_data: 
+         str_replace:
+            params:
+              ___instance-name___: 
+                str_replace:
+                  template: "CGN_A10_vThunder_<a10_index>"
+                  params:
+                     "<a10_index>": { get_param: [ a10_name_indexes, { get_param: a10_index } ] }
+              ___instance_address___: { get_param: [ a10_ip_list, { get_param: a10_index } ] }
+              ___id___: { get_param: [ a10_name_indexes, { get_param: a10_index } ] }
+              ___node1_ip___: { get_param: [ a10_ip_list, 0 ] }
+              ___node2_ip___: { get_param: [ a10_ip_list, 1 ] }
+              ___node3_ip___: { get_param: [ a10_ip_list, 2 ] }
+              ___node4_ip___: { get_param: [ a10_ip_list, 3 ] }
+            template: |
+              a10_blob: |
+                 hostname ___instance-name___
+                 ip dns primary 8.8.4.4
+                 glm use-mgmt-port
+                 glm enable-requests
+                 glm allocate-bandwidth 100
+                 glm token vTh0000000
+                 !
+                 interface management
+                   ip address dhcp
+                 !
+                 scaleout 1
+                   local-device
+                     priority ___id___
+                     id ___id___
+                   cluster-devices
+                     device-id 1
+                       ip ___node1_ip___
+                     device-id 2
+                       ip ___node2_ip___
+                     device-id 3
+                       ip ___node3_ip___
+                     device-id 4
+                       ip ___node4_ip___
+                 scaleout apps enable
+                 cgnv6 lsn inside source class-list CL1
+                 cgnv6 nat pool POOL1 200.100.0.0 netmask /24
+                 cgnv6 lsn-lid 1
+                   source-nat-pool POOL1
+                 end
+
+  #------------------------------------------------------------------------------
+  # Ports
+  #------------------------------------------------------------------------------
+
+  # Management Ports
+  management_port:
+    type: OS::Neutron::Port
+    properties:
+      name:
+        str_replace:
+          template: "CGN_A10_vThunder_Management_port<a10_index>"
+          params:
+            "<a10_index>": { get_param: [ a10_name_indexes, { get_param: a10_index } ] }
+      network: { get_param: management_network_name }
+      fixed_ips:
+        - ip_address: { get_param: [ a10_ip_list, { get_param: a10_index } ] }
+
+        
+  # SRIOV ports
+  switch1_port1:
+    type: OS::Neutron::Port
+    properties:
+      name:
+        str_replace:
+          template: "CGN_A10_vThunder_CGNSW1A_port<a10_index>"
+          params:
+            "<a10_index>": { get_param: [ a10_name_indexes, { get_param: a10_index } ] }
+      network: { get_param: sw1_port1_net }
+      port_security_enabled: False
+
+  switch1_port2:
+    type: OS::Neutron::Port
+    properties:
+      name:
+        str_replace:
+          template: "CGN_A10_vThunder_CGNSW1A_port<a10_index>"
+          params:
+            "<a10_index>": { get_param: [ a10_name_indexes, { get_param: a10_index } ] }
+      network: { get_param: sw1_port2_net }
+      port_security_enabled: False
+

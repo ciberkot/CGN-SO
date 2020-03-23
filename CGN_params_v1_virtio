@@ -1,0 +1,48 @@
+---
+# Parameters for CGN
+
+parameters:
+
+  # ---------------------------------------------------------------------------
+  # Flavor
+  # ---------------------------------------------------------------------------
+
+  #flavor: F-1-4-20
+  flavor: F-1-4-16
+
+
+  # ---------------------------------------------------------------------------
+  # Image
+  # ---------------------------------------------------------------------------
+
+  #image: ACOS_vThunder_4_1_4-GR1-P2_149
+  image: vThunder_4_1_4-GR1_78
+
+  # ---------------------------------------------------------------------------
+  # Availability Zone
+  # ---------------------------------------------------------------------------
+
+  availability_zone: "CGN_Fixed_A10"
+
+  # ---------------------------------------------------------------------------
+  # Network
+  # ---------------------------------------------------------------------------
+
+  site_name: CORP
+#  management_vlan: 430
+#  management_subnet_address: 10.142.18.0/26
+  a10_ip_list: [ 172.31.31.151, 172.31.31.152, 172.31.31.153, 172.31.31.154 ]
+#  inside_subnet_address: 10.142.13.0/24
+#  outside_subnet_address: 10.142.15.0/24
+
+  sw1_port1_net: INSIDE-BACKBONE
+  sw1_port2_net: OUTSIDE-BACKBONE
+  management_network_name: provider
+  stack_name: vth50
+  a10_index: 1
+  a10_name_indexes: [ "1", "2", "3", "4" ]
+  name: test
+
+resource_registry:
+  "A10::vThunder::ClusterInstance": CGN_instance_virtio.yaml
+

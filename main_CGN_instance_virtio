@@ -1,0 +1,58 @@
+---
+heat_template_version: 2016-04-08
+
+description: >
+  CGN template for every instance
+
+parameters:
+
+  name: 
+    type: string
+  a10_index: 
+    type: string
+  a10_name_indexes: 
+    type: comma_delimited_list
+  stack_name: 
+    type: string 
+  flavor: 
+    type: string
+  image: 
+    type: string
+  availability_zone: 
+    type: string
+  management_network_name: 
+    type: string
+  sw1_port1_net: 
+    type: string
+  sw1_port2_net: 
+    type: string
+  a10_ip_list:
+    type: comma_delimited_list
+  site_name:
+    type: string
+  node_count:
+    type: number
+    default: 2
+    description: number of nodes
+          
+
+resources:
+  a10-cluster:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: {get_param: node_count}
+      resource_def:
+        type: A10::vThunder::ClusterInstance
+        properties:
+          a10_index: '%index%'
+          name: {list_join: ['-',[{get_param: 'OS::stack_name'}, '%index%']]}
+          image: {get_param: image}
+          flavor: {get_param: flavor}
+          management_network_name: {get_param: management_network_name}
+          sw1_port1_net: {get_param: sw1_port1_net}
+          sw1_port2_net: {get_param: sw1_port2_net}
+          a10_ip_list: {get_param: a10_ip_list}
+          site_name: {get_param: site_name}
+          availability_zone: {get_param: availability_zone}
+          stack_name: {get_param: stack_name}
+          a10_name_indexes: {get_param: a10_name_indexes}
